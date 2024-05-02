@@ -9,8 +9,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "fm_functions.h"
-#include "utility.h"
+#include "fileManagerFunc.h"
+#include "Utility.h"
 
 void fm_mkdir(const char* pathname, mode_t mode) {
     if (mkdir(pathname, mode) == -1) {

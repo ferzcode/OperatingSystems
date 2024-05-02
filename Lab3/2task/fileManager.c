@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "fm_functions.h"
-#include "utility.h"
+#include "fileManagerFunc.h"
+#include "Utility.h"
 
 static char* get_arg_2(int argc, char** argv) {
     if (argc < 3) {
@@ -35,10 +35,12 @@ int main(int argc, char** argv) {
         char* arg2 = get_arg_2(argc, argv);
         fm_symlink(arg1, arg2);
     }
+
     else if (strcmp(prog_name, "fm_link") == 0) {
         char* arg2 = get_arg_2(argc, argv);
         fm_link(arg1, arg2);
     }
+
     else if (strcmp(prog_name, "fm_chmod") == 0) {
         char* arg2 = get_arg_2(argc, argv);
         mode_t mode = parse_mode(arg2);
