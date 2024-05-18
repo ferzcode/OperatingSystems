@@ -17,7 +17,9 @@ void fm_mkdir(const char* pathname, mode_t mode) {
         perror("fm_mkdir failed");
         return;
     }
-    chmod(pathname, mode);
+    if (chmod(pathname, mode) == -1) {
+        perror("chmod failed");
+    }
 }
 
 void fm_ls(const char* pathname) {
@@ -55,13 +57,29 @@ void fm_rmdir_r(const char* pathname) {
             full_entry_name = join(pathname, entry->d_name, '/');
         }
 
+        if (full_entry_name == NULL) {
+            perror("malloc failed");
+            closedir(dir_stream);
+            return;
+        }
+
         struct stat entry_info;
-        stat(full_entry_name, &entry_info);
+        if (stat(full_entry_name, &entry_info) == -1) {
+            perror("stat failed");
+            free(full_entry_name);
+            closedir(dir_stream);
+            return;
+        }
 
         if (S_ISDIR(entry_info.st_mode)) {
             fm_rmdir_r(full_entry_name);
         } else {
-            unlink(full_entry_name);
+            if (unlink(full_entry_name) == -1) {
+                perror("unlink failed");
+                free(full_entry_name);
+                closedir(dir_stream);
+                return;
+            }
         }
 
         free(full_entry_name);
@@ -74,11 +92,15 @@ void fm_rmdir_r(const char* pathname) {
 }
 
 void fm_create(const char* filename, mode_t mode) {
-    if (open(filename, O_RDONLY | O_CREAT | O_EXCL, mode) == -1) {
+    int fd = open(filename, O_RDONLY | O_CREAT | O_EXCL, mode);
+    if (fd == -1) {
         perror("fm_create failed");
         return;
     }
-    chmod(filename, mode);
+    close(fd);
+    if (chmod(filename, mode) == -1) {
+        perror("chmod failed");
+    }
 }
 
 void fm_cat(const char* filename) {
@@ -87,7 +109,9 @@ void fm_cat(const char* filename) {
         perror("fm_cat failed");
         return;
     }
-    print_file(file);
+    if (!print_file(file)) {
+        perror("print_file failed");
+    }
     fclose(file);
 }
 

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "utility.h"
+#include "Utility.h"
 
 int global_init = 1;
 int global_uninit;

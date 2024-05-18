@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "utility.h"
+#include "Utility.h"
 
 void reverse_dir(char* path, char* dst_path, __mode_t mode) {
     DIR* dir_stream = opendir(path);

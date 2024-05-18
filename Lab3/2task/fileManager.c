@@ -8,7 +8,7 @@
 static char* get_arg_2(int argc, char** argv) {
     if (argc < 3) {
         fprintf(stderr, "Missing argument 2.\n");
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
     return argv[2];
 }
@@ -16,9 +16,14 @@ static char* get_arg_2(int argc, char** argv) {
 int main(int argc, char** argv) {
     char* prog_name = argv[0];
     prog_name = get_short_name(prog_name);
+    if (prog_name == NULL) {
+        fprintf(stderr, "Memory allocation failed in get_short_name.\n");
+        return EXIT_FAILURE;
+    }
+
     if (argc < 2) {
         fprintf(stderr, "Missing argument 1.\n");
-        return -1;
+        return EXIT_FAILURE;
     }
     char* arg1 = argv[1];
 
@@ -44,15 +49,17 @@ int main(int argc, char** argv) {
     else if (strcmp(prog_name, "fm_chmod") == 0) {
         char* arg2 = get_arg_2(argc, argv);
         mode_t mode = parse_mode(arg2);
-        if (mode == -1) {
+        if (mode == (mode_t)-1) { // Примечание: parse_mode возвращает -1 в случае ошибки
             fprintf(stderr, "Invalid mode.\n");
-            return -1;
+            return EXIT_FAILURE;
         }
         fm_chmod(arg1, mode);
     }
 
     else {
         fprintf(stderr, "Unknown command\n");
-        return -1;
+        return EXIT_FAILURE;
     }
+
+    return EXIT_SUCCESS;
 }
