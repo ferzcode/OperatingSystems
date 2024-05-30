@@ -1,16 +1,18 @@
-#ifndef ERROR_PRINTERS_H_INCLUDED
-#define ERROR_PRINTERS_H_INCLUDED
+#ifndef UTILITY_H
+#define UTILITY_H
 
-int is_invalid(char* name);
+#include <sys/stat.h>
 
-void opendir_err(int errorCode, char* path);
+int is_invalid(const char* name);
 
-char* reverse_string(char* string);
+void opendir_err(int errorCode, const char* path);
 
-char* join(char* str1, char* str2, char symb);
+char* reverse_string(const char* string);
 
-void make_rev_file(char* file_name, char* dst_path, __mode_t mode);
+char* join(const char* str1, const char* str2, char symb);
 
-char* get_short_name(char* path);
+void make_rev_file(const char* file_name, const char* dst_path, __mode_t mode);
 
-#endif //ERROR_PRINTERS_H_INCLUDED
+char* get_short_name(const char* path);
+
+#endif // UTILITY_H

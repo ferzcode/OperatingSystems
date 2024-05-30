@@ -1,3 +1,3 @@
-gcc Reversed.c Utility.c
+gcc Reversed.c Utility.c -o prog
 mkdir / nano file / directory
-./a.out file/directory
+./prog file/directory

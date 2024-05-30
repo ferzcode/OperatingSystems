@@ -7,12 +7,12 @@
 
 #include "Utility.h"
 
-int is_invalid(char* name) {
-    return (name == NULL || name == "" ||
+int is_invalid(const char* name) {
+    return (name == NULL || *name == '\0' ||
             strcmp(".", name) == 0 || strcmp("..", name) == 0);
 }
 
-void opendir_err(int errorCode, char* path) {
+void opendir_err(int errorCode, const char* path) {
     switch (errorCode) {
         case EACCES:
             printf("Permission denied.\n");
@@ -29,21 +29,28 @@ void opendir_err(int errorCode, char* path) {
     }
 }
 
-char* reverse_string(char* string) {
+char* reverse_string(const char* string) {
     size_t len = strlen(string);
     char* reversed = malloc((len + 1) * sizeof(*reversed));
+    if (!reversed) {
+        perror("Failed to allocate memory for reversed string");
+        exit(EXIT_FAILURE);
+    }
 
     for (size_t i = 0; i < len; i++) {
         reversed[i] = string[len - i - 1];
     }
-    reversed[len] = 0;
+    reversed[len] = '\0';
     return reversed;
 }
 
-char* join(char* str1, char* str2, char symb) {
-    //One character for the symb delimiter and one more character for the terminating zero are considered (+2)
+char* join(const char* str1, const char* str2, char symb) {
     size_t joined_len = strlen(str1) + strlen(str2) + 2;
     char* joined = malloc(joined_len * sizeof(*joined));
+    if (!joined) {
+        perror("Failed to allocate memory for joined string");
+        exit(EXIT_FAILURE);
+    }
     snprintf(joined, joined_len, "%s%c%s", str1, symb, str2);
     return joined;
 }
@@ -60,12 +67,10 @@ static void rev_file_content(FILE* src, FILE* dst) {
     enum {BUFF_SIZE = 100};
     char buff[BUFF_SIZE];
 
-    //This line sets the file position pointer to the end of file src.
-    // This is done to get the length of the file using ftell.
     fseek(src, 0, SEEK_END);
     long length = ftell(src);
     int iter = length / BUFF_SIZE;
-    int remainder = length - BUFF_SIZE * iter;
+    int remainder = length % BUFF_SIZE;
 
     for (int i = 1; i <= iter; i++) {
         fseek(src, -(BUFF_SIZE * i), SEEK_END);
@@ -88,39 +93,64 @@ static void rev_file_content(FILE* src, FILE* dst) {
     }
 }
 
-void make_rev_file(char* file_name, char* dst_path, __mode_t mode) {
+void make_rev_file(const char* file_name, const char* dst_path, __mode_t mode) {
     char* short_name = get_short_name(file_name);
+    if (short_name == NULL) {
+        return;
+    }
+
     if (is_invalid(short_name)) {
+        free(short_name);
         return;
     }
 
     char* rev_name = reverse_string(short_name);
-    char* full_rev_name = join(dst_path, rev_name, '/');
-
-    printf("%s -> %s\e[0m\n", file_name, full_rev_name);
-
-
-    FILE* file = fopen(file_name, "rb");
-    if (file == NULL) {
+    free(short_name);
+    if (!rev_name) {
+        perror("Failed to reverse string");
         return;
     }
+
+    char* full_rev_name = join(dst_path, rev_name, '/');
+    free(rev_name);
+    if (!full_rev_name) {
+        perror("Failed to join strings");
+        return;
+    }
+
+    printf("%s -> %s\n", file_name, full_rev_name);
+
+    FILE* file = fopen(file_name, "rb");
+    if (!file) {
+        perror("Failed to open source file");
+        free(full_rev_name);
+        return;
+    }
+
     FILE* rev_file = fopen(full_rev_name, "wb");
+    if (!rev_file) {
+        perror("Failed to open destination file");
+        fclose(file);
+        free(full_rev_name);
+        return;
+    }
 
     rev_file_content(file, rev_file);
 
     fclose(file);
     fclose(rev_file);
 
-    chmod(full_rev_name, mode);
+    if (chmod(full_rev_name, mode) != 0) {
+        perror("Failed to set file permissions");
+    }
 
-    free(rev_name);
     free(full_rev_name);
 }
 
-char* get_short_name(char* full_name) {
-    char* name = strrchr(full_name, '/');
-    if (name == NULL) {
-        return full_name;
+char* get_short_name(const char* full_name) {
+    const char* name = strrchr(full_name, '/');
+    if (!name) {
+        return strdup(full_name);
     }
-    return name + 1;
+    return strdup(name + 1);
 }
