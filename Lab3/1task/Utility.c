@@ -1,6 +1,5 @@
 #include <errno.h>
 #include <sys/stat.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,7 +62,6 @@ static void reverse_array(char* buff, int len) {
     }
 }
 
-
 void rev_file_content(FILE* src, FILE* dst) {
     enum { BUFF_SIZE = 100 };
     char buff[BUFF_SIZE];
@@ -102,7 +100,7 @@ void rev_file_content(FILE* src, FILE* dst) {
         size_t bytes_written = 0;
         while (bytes_written < bytes_read) {
             size_t result = fwrite(buff + bytes_written, 1, bytes_read - bytes_written, dst);
-            if (result < 1) { // Проверка на ошибку fwrite
+            if (ferror(dst)) { // Проверка на ошибку ferror после fwrite
                 perror("Error writing to destination file");
                 exit(EXIT_FAILURE);
             }
@@ -130,7 +128,7 @@ void rev_file_content(FILE* src, FILE* dst) {
         size_t bytes_written = 0;
         while (bytes_written < bytes_read) {
             size_t result = fwrite(buff + bytes_written, 1, bytes_read - bytes_written, dst);
-            if (result < 1) { // Проверка на ошибку fwrite
+            if (ferror(dst)) { // Проверка на ошибку ferror после fwrite
                 perror("Error writing to destination file");
                 exit(EXIT_FAILURE);
             }
