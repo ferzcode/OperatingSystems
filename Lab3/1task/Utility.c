@@ -63,33 +63,79 @@ static void reverse_array(char* buff, int len) {
     }
 }
 
-static void rev_file_content(FILE* src, FILE* dst) {
-    enum {BUFF_SIZE = 100};
+
+void rev_file_content(FILE* src, FILE* dst) {
+    enum { BUFF_SIZE = 100 };
     char buff[BUFF_SIZE];
 
-    fseek(src, 0, SEEK_END);
-    long length = ftell(src);
+    if (fseek(src, 0, SEEK_END) != 0) { // Проверка на ошибку fseek
+        perror("Error seeking in source file");
+        exit(EXIT_FAILURE);
+    }
+
+    long length = ftell(src); // Проверка на ошибку ftell
+    if (length == -1L) {
+        perror("Error getting file length");
+        exit(EXIT_FAILURE);
+    }
+
     int iter = length / BUFF_SIZE;
     int remainder = length % BUFF_SIZE;
 
+    // Обработка больших блоков
     for (int i = 1; i <= iter; i++) {
-        fseek(src, -(BUFF_SIZE * i), SEEK_END);
-        int bytes_read = fread(buff, 1, BUFF_SIZE, src);
+        if (fseek(src, -(BUFF_SIZE * i), SEEK_END) != 0) { // Проверка на ошибку fseek
+            perror("Error seeking in source file");
+            exit(EXIT_FAILURE);
+        }
+
+        size_t bytes_read = fread(buff, 1, BUFF_SIZE, src); // Проверка на ошибку fread
+        if (bytes_read != BUFF_SIZE) {
+            if (ferror(src)) {
+                perror("Error reading from source file");
+                exit(EXIT_FAILURE);
+            }
+        }
+
         reverse_array(buff, BUFF_SIZE);
 
-        int bytes_written = 0;
+        size_t bytes_written = 0;
         while (bytes_written < bytes_read) {
-            bytes_written += fwrite(buff + bytes_written, 1, bytes_read - bytes_written, dst);
+            size_t result = fwrite(buff + bytes_written, 1, bytes_read - bytes_written, dst);
+            if (result < 1) { // Проверка на ошибку fwrite
+                perror("Error writing to destination file");
+                exit(EXIT_FAILURE);
+            }
+            bytes_written += result;
         }
     }
 
-    fseek(src, 0, SEEK_SET);
-    int bytes_read = fread(buff, 1, remainder, src);
-    reverse_array(buff, remainder);
+    // Обработка остатка
+    if (fseek(src, 0, SEEK_SET) != 0) { // Проверка на ошибку fseek
+        perror("Error seeking in source file");
+        exit(EXIT_FAILURE);
+    }
 
-    int bytes_written = 0;
-    while (bytes_written < bytes_read) {
-        bytes_written += fwrite(buff + bytes_written, 1, bytes_read - bytes_written, dst);
+    if (remainder > 0) {
+        size_t bytes_read = fread(buff, 1, remainder, src); // Проверка на ошибку fread
+        if (bytes_read != remainder) {
+            if (ferror(src)) {
+                perror("Error reading from source file");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        reverse_array(buff, remainder);
+
+        size_t bytes_written = 0;
+        while (bytes_written < bytes_read) {
+            size_t result = fwrite(buff + bytes_written, 1, bytes_read - bytes_written, dst);
+            if (result < 1) { // Проверка на ошибку fwrite
+                perror("Error writing to destination file");
+                exit(EXIT_FAILURE);
+            }
+            bytes_written += result;
+        }
     }
 }
 
